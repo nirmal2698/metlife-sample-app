@@ -1,4 +1,9 @@
 import React from 'react';
+import useFetch from "./useFetch";
+
+// let arr = [];
+// let check = [];
+// let completed = [];
 
 function ToDoComponent () {
     const[thing, setThing] = React.useState('');  //for storing the entered task
@@ -7,6 +12,15 @@ function ToDoComponent () {
     const[completed, setCompleted] = React.useState([]);  //for showing completed tasks
     const[button, setButton] = React.useState('all-btn');  //for storing the current button
     const[showbuttons, setShowButtons] = React.useState(false);  //for showing the button states
+
+    // const msg = {     //api for reading all tasks
+    //     "method": "GET",
+    //     "headers": {
+    //         "content-type": "application/json",
+    //         "accept": "application/json"
+    //     }
+    // }
+    // const [data] = useFetch("http://localhost:3003/tasks/display_tasks", msg)
     
     const handleEnter = (event) => {              //handle function when user clicked enter
         console.log(event.target.value)
@@ -25,6 +39,7 @@ function ToDoComponent () {
             console.log(response)
             setButton('all-btn');
             setShowButtons(true);
+            if(response.message == 'Already present') alert('Already present')
             fetch("http://localhost:3003/tasks/display_tasks", {     //api for reading all tasks
                 "method": "GET",
                 "headers": {
@@ -36,7 +51,7 @@ function ToDoComponent () {
             .then(response => {
                 console.log(response.tasks)
                 let arr = response.tasks;
-                let showJsx = <CardsDiv card={arr.map((item, k) => { return <Card key={`task${k}`} item={item} /> })} />
+                let showJsx = <CardsDiv card={arr.map((item, k) => { return <Card key={`task${k}`} item={item}/> })} />
                 setTasks(showJsx);
             })
         })
@@ -112,8 +127,10 @@ function CardsDiv ({card}) {              //Parent div Component for the tasks
 
 function Card (props) {                  //Component for the showing all tasks
     let item = props.item;
+    const [checkedState, setCheckedState] = React.useState(false);
 
     function handleChecked() {
+        setCheckedState(!checkedState);
         fetch("http://localhost:3003/tasks/add_active-task", {         //api for posting active task
             "method": "POST",
             "headers": {
@@ -122,17 +139,18 @@ function Card (props) {                  //Component for the showing all tasks
             },
             "body": JSON.stringify({
                 title: item.title,
-                checkState: true
+                checkState: !checkedState
             })
         })
         .then(response => response.json())
         .then(response => {
             console.log(response)
+            if(response.message == 'Already active/completed') alert('Already active/completed')
         })
     }
     return(
         <div>
-            <input type="checkbox" onChange={(e) => handleChecked(e)}></input>
+            <input type="checkbox" onChange={(e) => handleChecked(e)} checked={checkedState}></input>
             <span style={{marginRight: '5px'}}>{item.title}</span>
             <button>Remove</button>
             <br />
@@ -169,6 +187,7 @@ function ActiveCard (props) {               //Component for the showing active t
             .then(response => response.json())
             .then(response => {
                 console.log(response)
+                // if(response.message == 'Already present') alert('Already present')
             })
         }
         else{
